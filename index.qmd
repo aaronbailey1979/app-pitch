@@ -1,0 +1,83 @@
+---
+title: "A shiny app comparing theoretical and regressed models from sampled data"
+author: Ben B
+format: revealjs
+editor: visual
+---
+
+## What the app does
+
+Using slides, the shiny app allows the user to create
+
+-   a linear model prescribed slope, intercept, and standard deviation of the mean zero Gaussian random error term (prescribed seed also)
+-   a random sample of this data with prescribed size set where the values of the independent variable are uniformly sampled from within a prescribed range
+-   a regressed model of the data set, with to option include/exclude either slope or intercept.
+-   a plot of the sampled data along with the theoretical and regressed models.
+
+------------------------------------------------------------------------
+
+## What the app is good for
+
+-   This app allows the user to compare and contrast a theoretical model with the regressed model determined by a random sample from the theoretical model.
+-   Notably, the user can choose whether to include the slope or intercept in the regression.
+-   Aside: the fact the all input is obtained through sliders means none of the input needs to be validated.
+
+------------------------------------------------------------------------
+
+## A sample of how the app uses input to generate the plot
+
+```{r, echo=TRUE}
+
+# Get the seed, variable and model parameters. The parameters below will be
+# input by the user in the app.
+
+set.seed(12345)
+num <- 25
+minx <- -10
+maxx <- 10
+model_int <- -2
+model_slope <- 5
+model_std_dev <- 3
+
+# Generate the theoretical model and random sample.
+
+xvals <- runif(num,minx,maxx)
+theoretical <- function(x){model_int+model_slope*x}
+yvals <- theoretical(xvals) +rnorm(num,0,model_std_dev)
+
+# Generate the regression line. The checkboxes in the shiny app allow you to
+# choose any combination of intercept and slope. If no parameters are selected,
+# the plot will simply be the original theoretical model and sampled data set.
+
+fit <- lm(yvals ~ xvals)
+reg_int <- fit$coefficients[1]
+reg_slope <- fit$coefficients[2]
+
+# Generate the plot of the theoretical model, sample, and regressed line.
+
+library(ggplot2)
+plot(xvals, yvals,
+     xlab ="X-axis", ylab = "Y-axis",
+     pch = 19, col = "black",
+     main = c(paste("Sample S generated from"),
+              paste("theoretical model y=(",model_int,
+                    ")+(",model_slope,")x",sep=""),
+              paste("with random gaussian noise mu=0, sigma="
+                    ,model_std_dev,",",sep=""),
+              paste("and regressed model y=(",
+                    reg_int,")+(",reg_slope,")x.",sep="")))
+lines(xvals,theoretical(xvals), col = "blue",lwd = 3)
+abline(fit,col="orange",lwd = 3)
+legend("topleft", legend = c("theoretical model", "regression line"),
+       lwd = 3, lty = c(1, 1), col = c("blue", "orange"))
+plot_from_params<-recordPlot() # save the plot
+```
+
+------------------------------------------------------------------------
+
+## The resulting sample plot with theoretical and regressed fit.
+
+```{r, echo=TRUE}
+# print the plot
+plot_from_params
+```
